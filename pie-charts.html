@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dc/2.1.8/dc.min.css" type="text/css" />
+    <style>
+        div {
+            clear: left;
+        }
+    </style>
+    
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/crossfilter/1.3.12/crossfilter.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dc/2.1.8/dc.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/queue-async/1.0.7/queue.min.js"></script>
+    <!-- queue-async delays calling function til ldata ready -->
+</head>
+<body>
+    
+    <div>
+        <h3>Total Spend Per Person</h3>
+        <div id="per-person-chart"></div>
+    </div>
+    
+    <div>
+        <h3>Total Spend Per Store</h3>
+        <div id="per-store-chart"></div>
+    </div>
+    
+    <div>
+        <h3>Total Spend Per State</h3>
+        <div id="per-state-chart"></div>
+    </div>
+    
+    <script>
+    queue()
+        .defer(d3.json, "data/transactions.json")   // this is data file we imported 
+        //go get data/transactions.json and bring back in form d3.json
+        .await(makeGraphs); //when d3.json is returned call method makeGraphs(doesnt have to be called makeGraphs)
+        
+        function makeGraphs(error, transactionsData) {      //exception handling if theres error..data fails to load
+                                                    //when data loads it appears in transactionsData in our function makeGraphs
+            var ndx = crossfilter(transactionsData);   // create incedence of crossfilter object ndx 
+            
+            var name_dim = ndx.dimension(dc.pluck("name"));     //determine dimension..in this case "name". dc to access our
+                                                                //pluck...named dimension
+            var total_spend_per_person = name_dim.group().reduceSum(dc.pluck("spend")); //group by name and get sum of spend
+            //by name. this is done using name_dim. we group and reduceSum...based on spend
+            //basically group all names and break it into spend per name which then is available in total_spend_per_person
+        
+        
+   
+            
+            dc.pieChart("#per-person-chart")
+                .height(330)        //amount of realestate on page the chart takes up. breathing space around chart
+                .radius(90)
+                .transitionDuration(1500)
+                .dimension(name_dim)            //defined on line 48
+                .group(total_spend_per_person)      //group base on variable on line50
+        
+        
+            var store_dim = ndx.dimension(dc.pluck("store"));     //determine dimension..in this case "name". dc to access our
+                                                                //pluck...named dimension
+            var total_spend_per_store = store_dim.group().reduceSum(dc.pluck("spend")); //group by name and get sum of spend
+            //by name. this is done using name_dim. we group and reduceSum...based on spend
+            //basically group all names and break it into spend per name which then is available in total_spend_per_person
+        
+        
+   
+    
+            dc.pieChart("#per-store-chart")
+                .height(330)        //amount of realestate on page the chart takes up. breathing space around chart
+                .radius(90)
+                .transitionDuration(1500)
+                .dimension(store_dim)            //defined on line 48
+                .group(total_spend_per_store)      //group base on variable on line50
+                
+                
+            var state_dim = ndx.dimension(dc.pluck("state"));     //determine dimension..in this case "name". dc to access our
+                                                                //pluck...named dimension
+            var total_spend_per_state = state_dim.group().reduceSum(dc.pluck("spend")); //group by name and get sum of spend
+            //by name. this is done using name_dim. we group and reduceSum...based on spend
+            //basically group all names and break it into spend per name which then is available in total_spend_per_person
+        
+            // reduceSum is always based on spend
+   
+    
+            dc.pieChart("#per-state-chart")
+                .height(330)        //amount of realestate on page the chart takes up. breathing space around chart
+                .radius(90)
+                .transitionDuration(1500)
+                .dimension(state_dim)            //defined on line 48
+                .group(total_spend_per_state)      //group base on variable on line50
+                
+                
+                
+                
+            dc.renderAll();     //to render chart
+    
+}
+    
+    </script>
+    
+</body>
+</html>
