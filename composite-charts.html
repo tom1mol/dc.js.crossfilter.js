@@ -44,7 +44,28 @@
 
         var minDate = date_dim.bottom(1)[0].date;    
         var maxDate = date_dim.top(1)[0].date;
+       
+       //replaced code below(line 67-95) with this
+       
+        function spend_by_name(name) {
+            return function (d) {
+                    if (d.name === name) {    
+                        return +d.spend;        
+                    } else {
+                        return 0;
+                    }
+                }
+        }
+       
+        var tomSpendByMonth = date_dim.group().reduceSum(spend_by_name("Tom"));
         
+        var bobSpendByMonth = date_dim.group().reduceSum(spend_by_name("Bob"));
+        
+        var aliceSpendByMonth = date_dim.group().reduceSum(spend_by_name("Alice"));
+
+ 
+        
+       /* 
         var tomSpendByMonth = date_dim.group().reduceSum(function (d) {
             if (d.name === "Tom") {    //check..if name = Tom
                 return +d.spend;        //get spend instance for Tom 
@@ -71,6 +92,8 @@
                 return 0;
             }
         });
+        
+        */ // code i replaced with code above
         
         
         var compositeChart = dc.compositeChart("#composite-chart");  // create composite chart
