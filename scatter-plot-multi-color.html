@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Dimensional charting </title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dc/2.1.8/dc.min.css" type="text/css" />
+    <style>
+        div {
+            clear: left;
+        }
+    </style>
+    
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/crossfilter/1.3.12/crossfilter.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dc/2.1.8/dc.js"></script>  
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/queue-async/1.0.7/queue.min.js"></script>
+    <!-- queue-async delays calling function til ldata ready -->
+</head>
+<body>
+    <div>
+        <h3>Transactions by Date and Spend</h3>
+        <div id="scatter-plot"></div>
+    </div>
+    
+    
+    <script>
+    queue()
+        .defer(d3.json, "data/transactions.json")    
+        .await(makeGraphs); 
+        
+    function makeGraphs(error, transactionsData) {      
+        var ndx = crossfilter(transactionsData);   
+        
+        var parseDate = d3.time.format("%d/%m/%Y").parse;
+        transactionsData.forEach(function(d) {
+            d.date = parseDate(d.date);
+        });   // format our data because domain runs across date range
+        
+        var date_dim = ndx.dimension(function(d) {
+            return d.date;
+        });
+
+        var min_date = date_dim.bottom(1)[0].date;      //start and end dates
+        var max_date = date_dim.top(1)[0].date;     //provides values for our domain
+        
+        var spend_dim = ndx.dimension(function (d) { // use date dimension to group and sum
+            return [d.date, d.spend, d.name]; // map both date and spend coordinates. date and spend at that point
+        });
+        
+        var spend_group = spend_dim.group();
+        
+        
+        var personColors = d3.scale.ordinal()
+                    .domain(["Tom", "Bob", "Alice"])
+                    .range(["red", "green", "blue"])   //1 to 1 mapping between domain and range. ie tom=red, bob=green etc
+        
+        console.log(spend_group.all());  //write to console and allows us view in chrome developer tools
+        
+        var spend_chart = dc.scatterPlot("#scatter-plot");  // creating dc scatterplot and bind it to scatterplot div
+        spend_chart
+            .width(768)
+            .height(480)
+            .x(d3.time.scale().domain([min_date, max_date]))
+            .brushOn(false)
+            .symbolSize(8)  // scatterplot represented by disk
+            .clipPadding(10)
+            .yAxisLabel("Amount Spent")  // x-axis is time
+            .title(function (d) {
+                return d.key[2] + " spent " + d.key[1];  // person...spent...amount comes up when hover over point                                
+                //d.key[2] gives attribute..ie tom,bob,alice
+            })
+            .colorAccessor(function (d) {
+                return d.key[2];
+            })
+            .colors(personColors)
+            .dimension(spend_dim)  // scatterplot represents num transactions for particular spend on particular date
+            .group(spend_group);
+        
+        dc.renderAll();
+
+        
+        
+}
+    
+    </script>
+    
+</body>
+</html>
